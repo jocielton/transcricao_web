@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Transcrição Avançada</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Transcrição de Voz Avançada</h1>
+
+        <div class="controls">
+            <label for="fontSelect">Fonte:</label>
+            <select id="fontSelect">
+                <option value="monospace">Monospace</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="'Courier New', monospace">Courier New</option>
+                <option value="Verdana, sans-serif">Verdana</option>
+                <option value="Georgia, serif">Georgia</option>
+            </select>
+
+            <label for="sizeSelect">Tamanho:</label>
+            <select id="sizeSelect">
+                <option value="14px">14px</option>
+                <option value="16px" selected>16px</option>
+                <option value="18px">18px</option>
+                <option value="20px">20px</option>
+                <option value="22px">22px</option>
+                <option value="28px">28px</option>
+                <option value="35px">35px</option>
+                <option value="48px">48px</option>
+            </select>
+        </div>
+
+        <div class="buttons">
+    <button id="startBtn">Iniciar Transcrição</button>
+    <button id="stopBtn">Parar Transcrição</button>
+    <button id="downloadBtn">Baixar Transcrição</button>
+    <button id="clearBtn">Limpar</button>
+</div>
+
+
+        <div id="transcricao" class="transcricao"></div>
+        <div id="status-led" class="led"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

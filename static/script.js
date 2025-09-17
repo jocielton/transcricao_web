@@ -9,32 +9,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const sizeSelect = document.getElementById("sizeSelect");
     const clearBtn = document.getElementById("clearBtn");
 
-    const presentationBtn = document.getElementById("presentationBtn");
-    const presentationDiv = document.getElementById("presentationDiv");
-    const textColorInput = document.getElementById("textColor");
-    const bgColorInput = document.getElementById("bgColor");
-
     // --- Estado ---
-    let isPresentation = false;
     let transcrevendo = false;
+    let maximizado = false;
 
-    // --- Cria área de texto da apresentação (uma vez) ---
-    const presentationText = document.createElement("div");
-    presentationText.className = "presentation-text";
-    presentationDiv.appendChild(presentationText);
+    // --- Botão Maximizar ---
+    const maximizeBtn = document.createElement("button");
+    maximizeBtn.textContent = "⛶";
+    maximizeBtn.title = "Maximizar / Restaurar";
+    maximizeBtn.style.position = "absolute";
+    maximizeBtn.style.top = "8px";
+    maximizeBtn.style.right = "8px";
+    maximizeBtn.style.padding = "4px 8px";
+    maximizeBtn.style.fontSize = "14px";
+    maximizeBtn.style.cursor = "pointer";
+    maximizeBtn.style.zIndex = "100";
 
-    // --- Cria botão Encerrar Apresentação (uma vez) ---
-    const endBtn = document.createElement("button");
-    endBtn.className = "end-btn";
-    endBtn.textContent = "Encerrar Apresentação";
-    endBtn.addEventListener("click", () => {
-        // encerra apresentação
-        isPresentation = false;
-        presentationDiv.style.display = "none";
-        presentationDiv.setAttribute('aria-hidden', 'true');
-        document.querySelector(".container").style.display = "block";
+    // adiciona dentro da área de transcrição (com posição relativa)
+    transcricaoDiv.style.position = "relative";
+    transcricaoDiv.appendChild(maximizeBtn);
+
+    maximizeBtn.addEventListener("click", () => {
+        if (!maximizado) {
+            transcricaoDiv.style.position = "fixed";
+            transcricaoDiv.style.top = "0";
+            transcricaoDiv.style.left = "0";
+            transcricaoDiv.style.width = "100%";
+            transcricaoDiv.style.height = "100%";
+            transcricaoDiv.style.zIndex = "9999";
+            transcricaoDiv.style.background = "#000";
+            maximizado = true;
+        } else {
+            transcricaoDiv.style.position = "relative";
+            transcricaoDiv.style.width = "";
+            transcricaoDiv.style.height = "320px";
+            transcricaoDiv.style.zIndex = "";
+            transcricaoDiv.style.background = "#000";
+            maximizado = false;
+        }
     });
-    presentationDiv.appendChild(endBtn);
 
     // --- Funções de controle ---
     startBtn.addEventListener("click", () => {
@@ -61,39 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch("/limpar").then(r => r.json()).then(data => {
             alert(data.mensagem);
             transcricaoDiv.textContent = "";
-            presentationText.textContent = "";
         }).catch(e => console.error("clear error:", e));
     });
 
     fontSelect.addEventListener("change", () => {
         transcricaoDiv.style.fontFamily = fontSelect.value;
-        presentationText.style.fontFamily = fontSelect.value;
     });
 
     sizeSelect.addEventListener("change", () => {
         transcricaoDiv.style.fontSize = sizeSelect.value;
-        presentationText.style.fontSize = sizeSelect.value;
-    });
-
-    // Cores do modo apresentação
-    textColorInput.addEventListener("input", () => {
-        presentationText.style.color = textColorInput.value;
-    });
-    bgColorInput.addEventListener("input", () => {
-        presentationDiv.style.backgroundColor = bgColorInput.value;
-    });
-
-    // --- Ativa/desativa modo apresentação ---
-    presentationBtn.addEventListener("click", () => {
-        isPresentation = true;
-        document.querySelector(".container").style.display = "none";
-        presentationDiv.style.display = "flex";
-        presentationDiv.setAttribute('aria-hidden', 'false');
-        // garante que controles assumam valores atuais
-        presentationText.style.color = textColorInput.value;
-        presentationDiv.style.backgroundColor = bgColorInput.value;
-        presentationText.style.fontFamily = fontSelect.value;
-        presentationText.style.fontSize = sizeSelect.value;
     });
 
     // --- Atualização em tempo real ---
@@ -103,26 +92,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!res.ok) throw new Error('network');
             const data = await res.json();
             const texto = data.texto || '';
-            // atualiza área normal
             transcricaoDiv.textContent = texto;
-            transcricaoDiv.scrollTop = transcricaoDiv.scrollHeight;
 
-            // atualiza modo apresentação se ativo
-            if (isPresentation) {
-                presentationText.textContent = texto;
-                // rolagem suave (se necessário)
-                presentationDiv.scrollTo({
-                    top: presentationDiv.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }
+            // recoloca botão dentro do texto (pois textContent apaga filhos)
+            transcricaoDiv.appendChild(maximizeBtn);
+
+            transcricaoDiv.scrollTop = transcricaoDiv.scrollHeight;
         } catch (err) {
-            // não interrompe o loop, apenas reporta no console
             console.debug("Erro ao buscar transcrição:", err);
         }
     }
 
-    // roda rapidamente no início e depois a cada 800ms
     atualizarTranscricao();
     setInterval(atualizarTranscricao, 800);
 });

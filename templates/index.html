@@ -40,7 +40,6 @@
             <button id="stopBtn">Parar Transcrição</button>
             <button id="downloadBtn">Baixar Transcrição</button>
             <button id="clearBtn">Limpar</button>
-            <button id="presentationBtn">Modo Apresentação</button>
         </div>
 
         <!-- Área de transcrição -->
@@ -48,18 +47,6 @@
 
         <!-- LED piscante -->
         <div id="status-led" class="led" title="Status: ouvindo"></div>
-
-        <!-- Modo Apresentação -->
-        <div id="presentationDiv" class="presentation" aria-hidden="true">
-            <!-- Controles de cores -->
-            <div class="presentation-controls">
-                <label for="textColor">Cor do texto:</label>
-                <input type="color" id="textColor" value="#0f0">
-                <label for="bgColor">Cor de fundo:</label>
-                <input type="color" id="bgColor" value="#000000">
-            </div>
-            <!-- o conteúdo da apresentação (criado e atualizado pelo JS) -->
-        </div>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>

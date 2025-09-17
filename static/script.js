@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Elementos ---
     const startBtn = document.getElementById("startBtn");
     const stopBtn = document.getElementById("stopBtn");
     const downloadBtn = document.getElementById("downloadBtn");
@@ -9,11 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const sizeSelect = document.getElementById("sizeSelect");
     const clearBtn = document.getElementById("clearBtn");
 
-    // --- Estado ---
     let transcrevendo = false;
     let maximizado = false;
 
-    // --- Botão Maximizar ---
+    // Botão Maximizar
     const maximizeBtn = document.createElement("button");
     maximizeBtn.textContent = "⛶";
     maximizeBtn.title = "Maximizar / Restaurar";
@@ -24,9 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     maximizeBtn.style.fontSize = "14px";
     maximizeBtn.style.cursor = "pointer";
     maximizeBtn.style.zIndex = "100";
-
-    // adiciona dentro da área de transcrição (com posição relativa)
-    transcricaoDiv.style.position = "relative";
     transcricaoDiv.appendChild(maximizeBtn);
 
     maximizeBtn.addEventListener("click", () => {
@@ -49,20 +44,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Funções de controle ---
     startBtn.addEventListener("click", () => {
-        fetch("/start").then(r => r.json()).then(data => {
-            alert(data.mensagem);
+        fetch("/start").then(r => r.json()).then(() => {
             transcrevendo = true;
-            led.style.opacity = 1;
+            led.classList.add("blink");
         }).catch(e => console.error("start error:", e));
     });
 
     stopBtn.addEventListener("click", () => {
-        fetch("/stop").then(r => r.json()).then(data => {
-            alert(data.mensagem);
+        fetch("/stop").then(r => r.json()).then(() => {
             transcrevendo = false;
-            led.style.opacity = 0;
+            led.classList.remove("blink");
+            led.style.opacity = 1;
         }).catch(e => console.error("stop error:", e));
     });
 
@@ -71,8 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     clearBtn.addEventListener("click", () => {
-        fetch("/limpar").then(r => r.json()).then(data => {
-            alert(data.mensagem);
+        fetch("/limpar").then(r => r.json()).then(() => {
             transcricaoDiv.textContent = "";
         }).catch(e => console.error("clear error:", e));
     });
@@ -85,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
         transcricaoDiv.style.fontSize = sizeSelect.value;
     });
 
-    // --- Atualização em tempo real ---
     async function atualizarTranscricao() {
         try {
             const res = await fetch('/get_transcricao');
@@ -93,10 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             const texto = data.texto || '';
             transcricaoDiv.textContent = texto;
-
-            // recoloca botão dentro do texto (pois textContent apaga filhos)
             transcricaoDiv.appendChild(maximizeBtn);
-
             transcricaoDiv.scrollTop = transcricaoDiv.scrollHeight;
         } catch (err) {
             console.debug("Erro ao buscar transcrição:", err);

@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # Estado global
 transcrevendo = False
-transcricao_total = []      # Armazena apenas texto puro
+transcricao_total = []
 
 # Inicializa arquivo
 def iniciar_arquivo():
@@ -31,13 +31,11 @@ def ouvir_microfone():
             try:
                 audio = recognizer.listen(source, timeout=5, phrase_time_limit=7)
                 texto = recognizer.recognize_google(audio, language="pt-BR").strip()
-                
-                if texto:  # adiciona apenas texto não vazio
+                if texto:
                     transcricao_total.append(texto)
                     timestamp = datetime.now().strftime('%H:%M:%S')
                     with open("transcricao.txt", "a", encoding="utf-8") as f:
                         f.write(f"[{timestamp}] {texto}\n")
-
             except (sr.WaitTimeoutError, sr.UnknownValueError):
                 pass
             except sr.RequestError as e:
@@ -57,13 +55,13 @@ def index():
 def start_transcricao():
     global transcrevendo
     transcrevendo = True
-    return jsonify({"status": "ok", "mensagem": "Transcrição iniciada"})
+    return jsonify({"status": "ok"})
 
 @app.route("/stop")
 def stop_transcricao():
     global transcrevendo
     transcrevendo = False
-    return jsonify({"status": "ok", "mensagem": "Transcrição encerrada"})
+    return jsonify({"status": "ok"})
 
 @app.route("/get_transcricao")
 def get_transcricao():
@@ -76,13 +74,11 @@ def download_transcricao():
 @app.route("/limpar")
 def limpar_transcricao():
     global transcricao_total
-    # Salva a transcrição atual com timestamp de encerramento
     with open("transcricao.txt", "a", encoding="utf-8") as f:
         f.write(f"\n=== Sessão encerrada em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n\n")
-    # Limpa a lista de transcrição e inicia nova sessão
     transcricao_total = []
     iniciar_arquivo()
-    return jsonify({"status": "ok", "mensagem": "Transcrição limpa e nova sessão iniciada"})
+    return jsonify({"status": "ok"})
 
 if __name__ == "__main__":
     app.run(debug=True)

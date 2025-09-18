@@ -1,78 +1,70 @@
 from flask import Flask, render_template, jsonify, send_file
-import speech_recognition as sr
 from datetime import datetime
 import threading
 import time
-
-# 🔹 Import para análise de sentimento
-from transformers import pipeline
+import json
+import os
+import pyaudio
+from vosk import Model, KaldiRecognizer
 
 app = Flask(__name__)
 
-# Estado global
+# --- Estado global ---
 transcrevendo = False
-transcricao_total = []  # guarda o texto já com HTML de estilo
+transcricao_total = []      # histórico confirmado
+transcricao_parcial = ""    # palavras parciais em andamento
 
-# 🔹 Inicializa pipeline de análise de sentimento
-sentiment_analyzer = pipeline("sentiment-analysis")
-
-# Inicializa arquivo
+# --- Inicializa arquivo ---
 def iniciar_arquivo():
     with open("transcricao.txt", "a", encoding="utf-8") as f:
-        f.write(f"\n=== Nova sessão de transcrição iniciada em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n\n")
+        f.write(f"\n=== Nova sessão iniciada em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n\n")
 
 iniciar_arquivo()
 
-recognizer = sr.Recognizer()
-microfone = sr.Microphone()
+# --- Configuração do Vosk ---
+MODEL_PATH = "model-pt"
+if not os.path.exists(MODEL_PATH):
+    raise FileNotFoundError("⚠️ Baixe o modelo PT-BR do Vosk e coloque em 'model-pt'.")
 
-def analisar_sentimento(texto):
-    """Classifica o sentimento e aplica estilo HTML"""
-    try:
-        resultado = sentiment_analyzer(texto[:512])[0]  # limita tokens
-        label = resultado['label']
-        score = resultado['score']
+model = Model(MODEL_PATH)
+rec = KaldiRecognizer(model, 16000)
 
-        if label == "POSITIVE" and score > 0.7:
-            return f'<span style="color:limegreen; font-size:18px;">{texto}</span>'
-        elif label == "NEGATIVE" and score > 0.7:
-            return f'<span style="color:red; font-size:18px; font-weight:bold;">{texto}</span>'
-        else:
-            return f'<span style="color:yellow; font-size:16px;">{texto}</span>'
-    except Exception:
-        return texto
+p = pyaudio.PyAudio()
+stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000,
+                input=True, frames_per_buffer=4000)
+stream.start_stream()
 
+# --- Thread de captura fluída ---
 def ouvir_microfone():
-    global transcrevendo, transcricao_total
-    with microfone as source:
-        recognizer.adjust_for_ambient_noise(source)
-        while True:
-            if not transcrevendo:
-                time.sleep(0.5)
-                continue
-            try:
-                audio = recognizer.listen(source, timeout=5, phrase_time_limit=7)
-                texto = recognizer.recognize_google(audio, language="pt-BR").strip()
-                
-                if texto:
-                    texto_formatado = analisar_sentimento(texto)
+    global transcrevendo, transcricao_total, transcricao_parcial
+    while True:
+        if not transcrevendo:
+            time.sleep(0.3)
+            continue
 
-                    transcricao_total.append(texto_formatado)
-                    timestamp = datetime.now().strftime('%H:%M:%S')
-                    with open("transcricao.txt", "a", encoding="utf-8") as f:
-                        f.write(f"[{timestamp}] {texto}\n")
+        data = stream.read(4000, exception_on_overflow=False)
 
-            except (sr.WaitTimeoutError, sr.UnknownValueError):
-                pass
-            except sr.RequestError as e:
-                print("Erro no serviço de reconhecimento:", e)
-                break
+        if rec.AcceptWaveform(data):
+            # Resultado final (frase completa)
+            result = json.loads(rec.Result())
+            texto = result.get("text", "").strip()
+            if texto:
+                transcricao_total.append(texto)
+                transcricao_parcial = ""
+                timestamp = datetime.now().strftime('%H:%M:%S')
+                with open("transcricao.txt", "a", encoding="utf-8") as f:
+                    f.write(f"[{timestamp}] {texto}\n")
+        else:
+            # Resultado parcial (palavra em andamento)
+            partial = json.loads(rec.PartialResult())
+            transcricao_parcial = partial.get("partial", "")
 
-# Thread para não bloquear Flask
+# --- Inicia thread ---
 thread = threading.Thread(target=ouvir_microfone)
 thread.daemon = True
 thread.start()
 
+# --- Rotas Flask ---
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -91,7 +83,10 @@ def stop_transcricao():
 
 @app.route("/get_transcricao")
 def get_transcricao():
-    return jsonify({"texto": "<br>".join(transcricao_total)})
+    return jsonify({
+        "historico": "\n".join(transcricao_total),
+        "parcial": transcricao_parcial
+    })
 
 @app.route("/download")
 def download_transcricao():
@@ -99,10 +94,11 @@ def download_transcricao():
 
 @app.route("/limpar")
 def limpar_transcricao():
-    global transcricao_total
+    global transcricao_total, transcricao_parcial
     with open("transcricao.txt", "a", encoding="utf-8") as f:
         f.write(f"\n=== Sessão encerrada em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n\n")
     transcricao_total = []
+    transcricao_parcial = ""
     iniciar_arquivo()
     return jsonify({"status": "ok"})
 

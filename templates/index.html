@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Transcrição com Análise de Sentimento</title>
+    <title>Transcrição Avançada</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Transcrição com Análise de Sentimento</h1>
+        <h1>Transcrição de Voz Avançada</h1>
 
         <!-- Controles de Fonte e Tamanho -->
         <div class="controls">
@@ -43,10 +43,10 @@
         </div>
 
         <!-- Área de transcrição -->
-        <div id="transcricao" class="transcricao" aria-live="polite">
-            <button id="maximizeBtn">⛶</button>
-            <div id="status-led" class="led"></div>
-        </div>
+        <div id="transcricao" class="transcricao" aria-live="polite"></div>
+
+        <!-- LED piscante -->
+        <div id="status-led" class="led" title="Status: ouvindo"></div>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>

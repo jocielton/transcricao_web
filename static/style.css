@@ -42,7 +42,6 @@ button:hover {
     color: #000;
 }
 
-/* Área de transcrição */
 .transcricao {
     margin-top: 14px;
     padding: 15px;
@@ -55,24 +54,25 @@ button:hover {
     font-family: monospace;
     font-size: 16px;
     white-space: pre-wrap;
-    position: relative;
 }
 
-/* LED vermelho */
+/* Texto parcial destacado */
+.transcricao .parcial {
+    color: #ff0;          /* amarelo */
+    font-style: italic;
+    text-decoration: underline;
+}
+
+/* LED piscante */
 .led {
     width: 18px;
     height: 18px;
+    background: #0f0;
     border-radius: 50%;
     position: absolute;
-    top: 8px;
-    right: 36px;
-    background: red;
+    top: 18px;
+    right: 18px;
     opacity: 0;
-    z-index: 1001;
-}
-
-/* LED piscando */
-.blink {
     animation: blink 1s infinite;
 }
 
@@ -80,19 +80,3 @@ button:hover {
     0%, 50%, 100% { opacity: 1; }
     25%, 75% { opacity: 0; }
 }
-
-/* Botão Maximizar */
-.transcricao #maximizeBtn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    padding: 4px 8px;
-    font-size: 14px;
-    cursor: pointer;
-    z-index: 1000;
-}
-
-/* Scroll personalizado */
-.transcricao::-webkit-scrollbar { width: 10px; }
-.transcricao::-webkit-scrollbar-track { background: #111; }
-.transcricao::-webkit-scrollbar-thumb { background: #0f0; border-radius: 6px; }

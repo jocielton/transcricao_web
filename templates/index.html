@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Transcrição Avançada</title>
+    <title>Transcrição com Análise de Sentimento</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Transcrição de Voz Avançada</h1>
+        <h1>Transcrição com Análise de Sentimento</h1>
 
+        <!-- Controles de Fonte e Tamanho -->
         <div class="controls">
             <label for="fontSelect">Fonte:</label>
             <select id="fontSelect">
@@ -33,6 +34,7 @@
             </select>
         </div>
 
+        <!-- Botões -->
         <div class="buttons">
             <button id="startBtn">Iniciar Transcrição</button>
             <button id="stopBtn">Parar Transcrição</button>
@@ -40,8 +42,11 @@
             <button id="clearBtn">Limpar</button>
         </div>
 
-        <div id="transcricao" class="transcricao" aria-live="polite"></div>
-        <div id="status-led" class="led" title="Status: ouvindo"></div>
+        <!-- Área de transcrição -->
+        <div id="transcricao" class="transcricao" aria-live="polite">
+            <button id="maximizeBtn">⛶</button>
+            <div id="status-led" class="led"></div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>

@@ -4,11 +4,17 @@ from datetime import datetime
 import threading
 import time
 
+# 🔹 Import para análise de sentimento
+from transformers import pipeline
+
 app = Flask(__name__)
 
 # Estado global
 transcrevendo = False
-transcricao_total = []
+transcricao_total = []  # guarda o texto já com HTML de estilo
+
+# 🔹 Inicializa pipeline de análise de sentimento
+sentiment_analyzer = pipeline("sentiment-analysis")
 
 # Inicializa arquivo
 def iniciar_arquivo():
@@ -19,6 +25,22 @@ iniciar_arquivo()
 
 recognizer = sr.Recognizer()
 microfone = sr.Microphone()
+
+def analisar_sentimento(texto):
+    """Classifica o sentimento e aplica estilo HTML"""
+    try:
+        resultado = sentiment_analyzer(texto[:512])[0]  # limita tokens
+        label = resultado['label']
+        score = resultado['score']
+
+        if label == "POSITIVE" and score > 0.7:
+            return f'<span style="color:limegreen; font-size:18px;">{texto}</span>'
+        elif label == "NEGATIVE" and score > 0.7:
+            return f'<span style="color:red; font-size:18px; font-weight:bold;">{texto}</span>'
+        else:
+            return f'<span style="color:yellow; font-size:16px;">{texto}</span>'
+    except Exception:
+        return texto
 
 def ouvir_microfone():
     global transcrevendo, transcricao_total
@@ -31,11 +53,15 @@ def ouvir_microfone():
             try:
                 audio = recognizer.listen(source, timeout=5, phrase_time_limit=7)
                 texto = recognizer.recognize_google(audio, language="pt-BR").strip()
+                
                 if texto:
-                    transcricao_total.append(texto)
+                    texto_formatado = analisar_sentimento(texto)
+
+                    transcricao_total.append(texto_formatado)
                     timestamp = datetime.now().strftime('%H:%M:%S')
                     with open("transcricao.txt", "a", encoding="utf-8") as f:
                         f.write(f"[{timestamp}] {texto}\n")
+
             except (sr.WaitTimeoutError, sr.UnknownValueError):
                 pass
             except sr.RequestError as e:
@@ -65,7 +91,7 @@ def stop_transcricao():
 
 @app.route("/get_transcricao")
 def get_transcricao():
-    return jsonify({"texto": "\n".join(transcricao_total)})
+    return jsonify({"texto": "<br>".join(transcricao_total)})
 
 @app.route("/download")
 def download_transcricao():
